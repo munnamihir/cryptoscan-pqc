@@ -1,0 +1,52 @@
+name: "cryptoscan-pqc"
+description: "Scan a codebase for quantum-vulnerable cryptography and emit a CycloneDX CBOM"
+author: "Mihir Bommisetty"
+branding:
+  icon: shield
+  color: purple
+
+inputs:
+  path:
+    description: "File or directory to scan"
+    required: false
+    default: "."
+  output:
+    description: "Path to write the CycloneDX CBOM JSON"
+    required: false
+    default: "cbom.json"
+  fail-on-vulnerable:
+    description: "Fail the job if quantum-vulnerable cryptography is found"
+    required: false
+    default: "false"
+  version:
+    description: "Version of cryptoscan-pqc to install (default: latest)"
+    required: false
+    default: ""
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-python@v5
+      with:
+        python-version: "3.12"
+    - name: Install cryptoscan-pqc
+      shell: bash
+      run: |
+        if [ -n "${{ inputs.version }}" ]; then
+          pip install "cryptoscan-pqc==${{ inputs.version }}"
+        else
+          pip install cryptoscan-pqc
+        fi
+    - name: Scan
+      shell: bash
+      run: |
+        FLAG=""
+        if [ "${{ inputs.fail-on-vulnerable }}" = "true" ]; then
+          FLAG="--fail-on-vulnerable"
+        fi
+        python -m cryptoscan scan "${{ inputs.path }}" -o "${{ inputs.output }}" $FLAG
+    - name: Upload CBOM
+      uses: actions/upload-artifact@v4
+      with:
+        name: cbom
+        path: ${{ inputs.output }}

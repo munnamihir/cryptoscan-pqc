@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "cryptoscan-pqc"
-version = "0.1.0"
+version = "0.1.1"
 description = "Discover cryptographic assets and emit a CycloneDX CBOM with post-quantum risk classification"
 readme = "README.md"
 requires-python = ">=3.8"

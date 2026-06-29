@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+cbom.json
+*.egg-info/
+dist/
+build/

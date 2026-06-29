@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cryptoscan-pqc"
+version = "0.1.0"
+description = "Discover cryptographic assets and emit a CycloneDX CBOM with post-quantum risk classification"
+readme = "README.md"
+requires-python = ">=3.8"
+license = { text = "MIT" }
+authors = [{ name = "Mihir Bommisetty" }]
+keywords = ["post-quantum", "cryptography", "CBOM", "CycloneDX", "PQC", "security"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Topic :: Security :: Cryptography",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+]
+
+[project.urls]
+Homepage = "https://github.com/munnamihir/cryptoscan-pqc"
+Repository = "https://github.com/munnamihir/cryptoscan-pqc"
+
+[project.scripts]
+pqscan = "cryptoscan.cli:main"
+
+[tool.setuptools]
+packages = ["cryptoscan"]

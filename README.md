@@ -1,27 +1,48 @@
-# cryptoscan
-![ci](https://github.com/munnamihir/cryptoscan/actions/workflows/ci.yml/badge.svg)
+# cryptoscan-pqc
+
+![ci](https://github.com/munnamihir/cryptoscan-pqc/actions/workflows/ci.yml/badge.svg)
+[![PyPI](https://img.shields.io/pypi/v/cryptoscan-pqc.svg)](https://pypi.org/project/cryptoscan-pqc/)
 
 **Discover the cryptography in a codebase and emit a CycloneDX CBOM with post-quantum risk classification.**
 
 You cannot migrate cryptography you cannot see. The June 2026 U.S. Executive Order on advanced cryptographic attacks set binding deadlines (2030 for key establishment, 2031 for signatures), extended them to federal contractors, and directed CISA and NIST to define the minimum elements of a **Cryptographic Bill of Materials (CBOM)**. Yet fewer than 5% of enterprises have a comprehensive cryptographic inventory, and existing discovery tooling tends to miss application-layer crypto, config, and firmware.
 
-`cryptoscan` is a small, fast first step: point it at a repository and it produces (1) a prioritized, human-readable inventory and (2) a machine-readable CycloneDX 1.6 CBOM, with every asset classified by its resistance to a cryptographically relevant quantum computer and mapped to its NIST PQC replacement.
+`cryptoscan-pqc` is a small, fast first step: point it at a repository and it produces (1) a prioritized, human-readable inventory and (2) a machine-readable CycloneDX 1.6 CBOM, with every asset classified by its resistance to a cryptographically relevant quantum computer and mapped to its NIST PQC replacement.
+
+## Install
+
+```bash
+pip install cryptoscan-pqc
+```
 
 ## Quick start
 
 ```bash
 # scan a repo, print a prioritized report
-python -m cryptoscan scan ./my-project
+pqscan scan ./my-project
 
 # write a CycloneDX 1.6 CBOM
-python -m cryptoscan scan ./my-project -o cbom.json
+pqscan scan ./my-project -o cbom.json
 
 # markdown report (for a PR comment or ticket)
-python -m cryptoscan scan ./my-project -f md
+pqscan scan ./my-project -f md
 
 # gate a CI pipeline: non-zero exit if quantum-vulnerable crypto is present
-python -m cryptoscan scan ./my-project --fail-on-vulnerable
+pqscan scan ./my-project --fail-on-vulnerable
 ```
+
+(The same entry point is available as `python -m cryptoscan scan ...`.)
+
+## Use it in GitHub Actions
+
+```yaml
+- uses: munnamihir/cryptoscan-pqc@v1
+  with:
+    path: .
+    fail-on-vulnerable: "true"
+```
+
+The Action installs the package, scans the repo, uploads the resulting `cbom.json` as a build artifact, and (optionally) fails the job when quantum-vulnerable cryptography is present.
 
 ## What it finds
 
@@ -46,7 +67,7 @@ knowledge.py   algorithm intelligence: quantum status, NIST level, replacement
 scanner.py     walk files, apply rules, collapse + dedupe -> findings
 cbom.py        findings -> CycloneDX 1.6 CBOM
 report.py      findings -> terminal / markdown
-cli.py         `cryptoscan scan <path>`
+cli.py         `pqscan scan <path>`
 ```
 
 ## Honest limitations
@@ -55,9 +76,9 @@ This is rule-based static discovery, not a substitute for a validated commercial
 
 ## Roadmap
 
+- `--ignore` paths and comment/string awareness to cut false positives
 - Dependency-aware detection (parse lockfiles; flag crypto libraries by version)
 - Key/parameter extraction from PEM and X.509 (sizes, signature algorithms)
-- Confidence scoring and false-positive suppression
 - SARIF output for code-scanning UIs
 - A web dashboard over the CBOM (trend the inventory over time — the "continuous" gap)
 

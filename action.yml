@@ -1,5 +1,5 @@
 name: "cryptoscan-pqc"
-description: "Scan a codebase for quantum-vulnerable cryptography and emit a CycloneDX CBOM"
+description: "Scan code for quantum-vulnerable cryptography and generate a CycloneDX 1.6 CBOM"
 author: "Mihir Bommisetty"
 branding:
   icon: shield
@@ -14,12 +14,16 @@ inputs:
     description: "Path to write the CycloneDX CBOM JSON"
     required: false
     default: "cbom.json"
+  artifact-name:
+    description: "Name of the uploaded CBOM artifact (unique within a workflow run)"
+    required: false
+    default: "cbom"
   fail-on-vulnerable:
-    description: "Fail the job if quantum-vulnerable cryptography is found"
+    description: "Fail the job if quantum-vulnerable or classically broken cryptography is found"
     required: false
     default: "false"
   version:
-    description: "Version of cryptoscan-pqc to install (default: latest)"
+    description: "Optional exact PyPI package version; when empty, install scanner bundled with this Action"
     required: false
     default: ""
 
@@ -31,22 +35,34 @@ runs:
         python-version: "3.12"
     - name: Install cryptoscan-pqc
       shell: bash
+      env:
+        INPUT_VERSION: ${{ inputs.version }}
+        ACTION_SOURCE: ${{ github.action_path }}
       run: |
-        if [ -n "${{ inputs.version }}" ]; then
-          pip install "cryptoscan-pqc==${{ inputs.version }}"
+        set -euo pipefail
+        if [[ -n "$INPUT_VERSION" ]]; then
+          python -m pip install "cryptoscan-pqc==$INPUT_VERSION"
         else
-          pip install cryptoscan-pqc
+          python -m pip install "$ACTION_SOURCE"
         fi
     - name: Scan
+      id: scan
       shell: bash
+      env:
+        INPUT_PATH: ${{ inputs.path }}
+        INPUT_OUTPUT: ${{ inputs.output }}
+        INPUT_FAIL_ON_VULNERABLE: ${{ inputs.fail-on-vulnerable }}
       run: |
-        FLAG=""
-        if [ "${{ inputs.fail-on-vulnerable }}" = "true" ]; then
-          FLAG="--fail-on-vulnerable"
+        set -euo pipefail
+        args=(scan "$INPUT_PATH" -o "$INPUT_OUTPUT")
+        if [[ "$INPUT_FAIL_ON_VULNERABLE" == "true" ]]; then
+          args+=(--fail-on-vulnerable)
         fi
-        python -m cryptoscan scan "${{ inputs.path }}" -o "${{ inputs.output }}" $FLAG
-    - name: Upload CBOM
+        python -m cryptoscan "${args[@]}"
+    - name: Upload CBOM even if scan reports vulnerable cryptography
+      if: ${{ always() && steps.scan.outcome != 'skipped' }}
       uses: actions/upload-artifact@v4
       with:
-        name: cbom
+        name: ${{ inputs.artifact-name }}
         path: ${{ inputs.output }}
+        if-no-files-found: error

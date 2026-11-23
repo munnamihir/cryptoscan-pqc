@@ -1,19 +1,24 @@
-# cryptoscan-pqc
+# CryptoScan PQC
+
+[![Release](https://img.shields.io/github/v/release/munnamihir/cryptoscan-pqc)](https://github.com/munnamihir/cryptoscan-pqc/releases/tag/v1.1.0)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 ![ci](https://github.com/munnamihir/cryptoscan-pqc/actions/workflows/ci.yml/badge.svg)
 [![PyPI](https://img.shields.io/pypi/v/cryptoscan-pqc.svg)](https://pypi.org/project/cryptoscan-pqc/)
 
 **Discover the cryptography in a codebase and emit a CycloneDX CBOM with post-quantum risk classification.**
 
-You cannot migrate cryptography you cannot see. The June 2026 U.S. Executive Order on advanced cryptographic attacks set binding deadlines (2030 for key establishment, 2031 for signatures), extended them to federal contractors, and directed CISA and NIST to define the minimum elements of a **Cryptographic Bill of Materials (CBOM)**. Yet fewer than 5% of enterprises have a comprehensive cryptographic inventory, and existing discovery tooling tends to miss application-layer crypto, config, and firmware.
+You cannot migrate cryptography you cannot see. The [June 22, 2026 U.S. Executive Order](https://www.whitehouse.gov/presidential-actions/2026/06/securing-the-nation-against-advanced-cryptographic-attacks/) directs a post-quantum migration strategy for federal systems, targets high-value and high-impact federal assets for 2030/2031 transitions, calls for proposed contractor rules, and directs CISA and NIST to develop minimum CBOM guidance. A source-code inventory is a practical **first step** toward understanding migration work; it is not a compliance assessment.
 
 `cryptoscan-pqc` is a small, fast first step: point it at a repository and it produces (1) a prioritized, human-readable inventory and (2) a machine-readable CycloneDX 1.6 CBOM, with every asset classified by its resistance to a cryptographically relevant quantum computer and mapped to its NIST PQC replacement.
 
 ## Install
 
 ```bash
-pip install cryptoscan-pqc
+python -m pip install cryptoscan-pqc
 ```
+
+The CLI is released to PyPI separately. The GitHub Action uses the scanner bundled with the selected Action tag by default, so `@v1.1.0` contains its tested scanner code.
 
 ## Quick start
 
@@ -33,14 +38,42 @@ pqscan scan ./my-project --fail-on-vulnerable
 
 (The same entry point is available as `python -m cryptoscan scan ...`.)
 
+## Run a reproducible demo
+
+```bash
+git clone https://github.com/munnamihir/cryptoscan-pqc.git
+cd cryptoscan-pqc
+python -m pip install -e .
+pqscan scan sample_vulnerable_app --no-color
+pqscan scan sample_vulnerable_app -f md
+pqscan scan sample_vulnerable_app -o cbom.json
+```
+
+The bundled sample intentionally contains insecure and post-quantum cryptography. Try the [interactive GitHub Actions demo](.github/workflows/demo.yml) (Actions → **PQC demo** → Run workflow), read the [annotated findings](docs/DEMO.md), or explore the [copyable integration example](examples/pqc-scan.yml).
+
 ## Use it in GitHub Actions
 
 ```yaml
-- uses: munnamihir/cryptoscan-pqc@v1
-  with:
-    path: .
-    fail-on-vulnerable: "true"
+name: Cryptography inventory
+on: [push, pull_request]
+
+permissions:
+  contents: read
+
+jobs:
+  scan:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: munnamihir/cryptoscan-pqc@v1.1.0
+        with:
+          path: .
+          output: cbom.json
+          artifact-name: cbom
+          fail-on-vulnerable: "true"
 ```
+
+**Note:** `fail-on-vulnerable: "true"` deliberately fails the job on detected risks; the CBOM is still uploaded under **Actions → run → Artifacts**. Start with `"false"` to inventory without gating. Prefer `@v1.1.0` over the older `@v1` tag until its compatibility review and tag update are complete.
 
 The Action installs the **scanner bundled with the referenced Action commit/tag** by default, scans the target, and uploads the generated CycloneDX CBOM. With `fail-on-vulnerable: "true"`, the job fails on quantum-vulnerable or classically broken cryptography **while still uploading the CBOM**.
 
@@ -67,7 +100,7 @@ Detectors cover Python, JavaScript/TypeScript, Java, Go, C/C++/OpenSSL, .NET/C#,
 
 ## Why CycloneDX
 
-CycloneDX has carried cryptographic-asset components since v1.6, and the format is the one named in regulatory CBOM guidance. Emitting standards-compliant output means the result drops straight into existing SBOM/CBOM pipelines and tooling rather than living in a bespoke format.
+CycloneDX 1.6 models cryptographic assets within a standardized BOM. CryptoScan generates this format and runs schema checks against the official CycloneDX 1.6.2 JSON schema. This helps downstream inventory workflows ingest the results; it does **not** mean every detection is verified or that a project is compliant with a regulation.
 
 ## Architecture
 
@@ -82,7 +115,7 @@ cli.py         `pqscan scan <path>`
 
 ## Honest limitations
 
-This is rule-based static discovery, not a substitute for a validated commercial inventory platform. It finds *named* crypto in source and config; it does not resolve crypto reached only through deep dependency chains, dynamically selected algorithms, or compiled binaries without source. It reports where cryptography *is*, not where it is missing. Treat it as the fast 80% pass that scopes the harder work.
+This is rule-based static discovery, not a substitute for a validated commercial inventory platform. It finds *named* crypto in source and config; it does not resolve crypto reached only through deep dependency chains, dynamically selected algorithms, or compiled binaries without source. It reports where cryptography *is*, not where it is missing. Treat the report as a review queue: inspect each finding, confirm whether the algorithm is actually used in a security-sensitive context, and prioritize remediation.
 
 ## Roadmap
 
@@ -92,6 +125,12 @@ This is rule-based static discovery, not a substitute for a validated commercial
 - SARIF output for code-scanning UIs
 - A web dashboard over the CBOM (trend the inventory over time — the "continuous" gap)
 
+## Get involved
+
+Try the [live demo workflow](.github/workflows/demo.yml), check the [sample report](docs/DEMO.md), and [open an issue](https://github.com/munnamihir/cryptoscan-pqc/issues) with false positives, missing algorithms or integration questions. Feedback and reproductions are more useful than unverified security claims.
+
+If you want to help grow the project, see the [community launch kit](docs/LAUNCH_KIT.md) and [version-tag guidance](docs/VERSIONING.md). This is an open-source heuristic scanner, not a certification or vulnerability exploit detector.
+
 ## License
 
-MIT.
+[MIT](LICENSE).

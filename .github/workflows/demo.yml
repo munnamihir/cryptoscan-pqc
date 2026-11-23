@@ -1,0 +1,43 @@
+# Manual-only demo of the already-published v1.1.0 Action.
+# This workflow does not gate PRs or publish any releases.
+name: PQC demo
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  demo:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out the sample project
+        uses: actions/checkout@v4
+
+      - name: Scan deliberately vulnerable sample
+        uses: munnamihir/cryptoscan-pqc@v1.1.0
+        with:
+          path: sample_vulnerable_app
+          output: demo-cbom.json
+          artifact-name: demo-cbom
+          fail-on-vulnerable: "false"
+
+      - name: Add a readable findings report to the workflow summary
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m cryptoscan scan sample_vulnerable_app -f md > demo-report.md
+          cat demo-report.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Check the CBOM was created
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          report = json.loads(Path("demo-cbom.json").read_text())
+          assert report["bomFormat"] == "CycloneDX"
+          assert report["specVersion"] == "1.6"
+          assert report["components"]
+          print("CBOM generated; download demo-cbom under this run's artifacts.")
+          PY

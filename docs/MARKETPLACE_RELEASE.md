@@ -1,6 +1,8 @@
-# Marketplace release candidate — NOT PUBLISHED
+# Marketplace v1.1.0 — published release record
 
-Prepared for review. No new release or Marketplace listing has been created.
+The GitHub release [v1.1.0](https://github.com/munnamihir/cryptoscan-pqc/releases/tag/v1.1.0) was published November 23, 2026 following passing tests on `main`. The owner selected GitHub Marketplace publishing in the release editor; independent Marketplace search visibility still needs verification. The PyPI package version is managed separately.
+
+The original release checklist is preserved below as a historical record. See [version tag guidance](VERSIONING.md) before modifying the older published `v1` tag.
 
 ## Proposed release
 

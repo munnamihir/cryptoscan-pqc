@@ -7,10 +7,11 @@ on:
 
 permissions:
   contents: read
+  actions: read
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     strategy:
       matrix:
         python-version: ["3.9", "3.12"]
@@ -27,7 +28,7 @@ jobs:
         run: python -m cryptoscan scan sample_vulnerable_app --no-color
 
   action-integration:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - name: Exercise single-file Action scan
@@ -36,13 +37,8 @@ jobs:
           path: sample_vulnerable_app/auth.py
           output: cbom-success.json
           artifact-name: cbom-success
-      - name: Download success artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: cbom-success
-          path: downloaded-success
       - name: Verify success CBOM
-        run: python -c "import json; x=json.load(open('downloaded-success/cbom-success.json')); assert x['specVersion']=='1.6'; assert x['components']"
+        run: python -c "import json; x=json.load(open('cbom-success.json')); assert x['specVersion']=='1.6'; assert x['components']"
       - name: Exercise failure-gated Action scan
         id: expected_failure
         uses: ./
@@ -56,13 +52,8 @@ jobs:
         env:
           SCAN_OUTCOME: ${{ steps.expected_failure.outcome }}
         run: test "$SCAN_OUTCOME" = "failure"
-      - name: Download failure artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: cbom-failure
-          path: downloaded-failure
       - name: Verify failure CBOM
-        run: python -c "import json; x=json.load(open('downloaded-failure/cbom-failure.json')); assert x['components']"
+        run: python -c "import json; x=json.load(open('cbom-failure.json')); assert x['components']"
       - name: Create path with literal shell metacharacters
         run: |
           mkdir -p 'test-fixtures/$(touch injected-by-action)'
@@ -76,4 +67,28 @@ jobs:
       - name: Assert untrusted inputs were not executed
         run: |
           test ! -e injected-by-action
-          python -c "import json; x=json.load(open('test-fixtures/$(touch injected-by-action)/cbom.json')); assert x['components']"
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          source = Path('test-fixtures/$(touch injected-by-action)/cbom.json')
+          assert json.loads(source.read_text())['components']
+          PY
+      - name: Confirm all three artifacts exist in this workflow run
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          for attempt in 1 2 3 4 5 6 7 8 9 10; do
+            names="$(gh api "repos/$REPO/actions/runs/$RUN_ID/artifacts" --jq '.artifacts[].name' || true)"
+            if grep -qx 'cbom-success' <<< "$names" &&
+               grep -qx 'cbom-failure' <<< "$names" &&
+               grep -qx 'cbom-injection-test' <<< "$names"; then
+              echo "All CBOM artifacts uploaded successfully."
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "::error::Expected CBOM artifacts were not found after retries"
+          exit 1

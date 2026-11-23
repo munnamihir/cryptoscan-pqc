@@ -52,6 +52,23 @@ class TestScanner(unittest.TestCase):
             findings = {f.algo_key: f for f in scanner.scan(d)}
             self.assertEqual(len(findings["3des"].occurrences), 1)
 
+    def test_scan_single_file(self):
+        with tempfile.TemporaryDirectory() as d:
+            p = _write(d, "single.py", "import hashlib; hashlib.md5(b'demo')")
+            findings = scanner.scan(p)
+            self.assertEqual({f.algo_key for f in findings}, {"md5"})
+            self.assertEqual(findings[0].occurrences[0].path, "single.py")
+            self.assertEqual(findings[0].occurrences[0].line, 1)
+
+    def test_scan_single_extensionless_file(self):
+        with tempfile.TemporaryDirectory() as d:
+            p = _write(d, "Makefile", "hashlib.md5(b'demo')")
+            self.assertEqual([f.algo_key for f in scanner.scan(p)], ["md5"])
+
+    def test_scan_missing_file(self):
+        with tempfile.TemporaryDirectory() as d:
+            self.assertEqual(scanner.scan(os.path.join(d, "missing.py")), [])
+
 
 class TestCBOM(unittest.TestCase):
     def test_cyclonedx_shape(self):
@@ -65,11 +82,13 @@ class TestCBOM(unittest.TestCase):
             self.assertEqual(comp["type"], "cryptographic-asset")
             self.assertEqual(comp["cryptoProperties"]["assetType"], "algorithm")
             self.assertIn("primitive", comp["cryptoProperties"]["algorithmProperties"])
+            self.assertEqual(comp["evidence"]["occurrences"][0]["line"], 1)
+            self.assertIn("components", bom["metadata"]["tools"])
             self.assertTrue(json.dumps(bom))  # serializable
 
     def test_every_algorithm_has_valid_primitive(self):
-        valid = {"drbg", "mac", "blockcipher", "streamcipher", "signature", "hash",
-                 "pke", "xof", "kdf", "keyagree", "kem", "ae", "combiner", "other", "unknown"}
+        valid = {"drbg", "mac", "block-cipher", "stream-cipher", "signature", "hash",
+                 "pke", "xof", "kdf", "key-agree", "kem", "ae", "combiner", "other", "unknown"}
         for key, a in ALGORITHMS.items():
             self.assertIn(a.primitive, valid, key)
 

@@ -42,7 +42,17 @@ pqscan scan ./my-project --fail-on-vulnerable
     fail-on-vulnerable: "true"
 ```
 
-The Action installs the package, scans the repo, uploads the resulting `cbom.json` as a build artifact, and (optionally) fails the job when quantum-vulnerable cryptography is present.
+The Action installs the **scanner bundled with the referenced Action commit/tag** by default, scans the target, and uploads the generated CycloneDX CBOM. With `fail-on-vulnerable: "true"`, the job fails on quantum-vulnerable or classically broken cryptography **while still uploading the CBOM**.
+
+| Action input | Default | Meaning |
+|---|---|---|
+| `path` | `.` | File or directory to scan |
+| `output` | `cbom.json` | CBOM output filename |
+| `artifact-name` | `cbom` | Unique artifact name within a workflow run |
+| `fail-on-vulnerable` | `false` | Return a nonzero exit code for vulnerable/broken cryptography |
+| `version` | *(empty)* | Optional exact PyPI version instead of bundled source |
+
+**Scope:** Cryptography discovery is heuristic. Findings require human review; matches in comments, configuration or dependencies do not prove exploitability. The CBOM artifact includes detected algorithm names and source file/line locations. See the [Marketplace release checklist](docs/MARKETPLACE_RELEASE.md).
 
 ## What it finds
 

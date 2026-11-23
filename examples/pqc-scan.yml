@@ -1,0 +1,25 @@
+# Copy to .github/workflows/pqc-scan.yml in another repository.
+# Start in inventory-only mode; turn on gating once findings are reviewed.
+name: Cryptography inventory
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  cryptoscan:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Discover crypto assets
+        uses: munnamihir/cryptoscan-pqc@v1.1.0
+        with:
+          path: .
+          output: cbom.json
+          artifact-name: cryptoscan-cbom
+          fail-on-vulnerable: "false"

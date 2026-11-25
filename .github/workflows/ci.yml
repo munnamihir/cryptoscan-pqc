@@ -83,6 +83,19 @@ jobs:
           artifact-name: cbom-success
       - name: Verify success CBOM
         run: python -c "import json; x=json.load(open('cbom-success.json')); assert x['specVersion']=='1.6'; assert x['components']"
+      - name: Verify Action generated the dashboard from the same CBOM
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          cbom = json.loads(Path('cbom-success.json').read_text())
+          html = Path('cryptoscan-dashboard.html').read_text()
+          marker = '<script id="bootstrap-data" type="application/json">'
+          assert marker in html
+          embedded = html.split(marker, 1)[1].split('</script>', 1)[0]
+          assert json.loads(embedded) == cbom
+          assert 'CryptoScan PQC — CBOM Intelligence' in html
+          PY
       - name: Exercise failure-gated Action scan
         id: expected_failure
         uses: ./
@@ -91,6 +104,7 @@ jobs:
           path: sample_vulnerable_app
           output: cbom-failure.json
           artifact-name: cbom-failure
+          dashboard-output: dashboard-failure.html
           fail-on-vulnerable: "true"
       - name: Confirm fail-on-vulnerable fails
         env:
@@ -98,6 +112,17 @@ jobs:
         run: test "$SCAN_OUTCOME" = "failure"
       - name: Verify failure CBOM
         run: python -c "import json; x=json.load(open('cbom-failure.json')); assert x['components']"
+      - name: Verify dashboard also survived the vulnerability gate
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          html = Path('dashboard-failure.html').read_text()
+          assert 'CryptoScan PQC — CBOM Intelligence' in html
+          marker = '<script id="bootstrap-data" type="application/json">'
+          payload = json.loads(html.split(marker, 1)[1].split('</script>', 1)[0])
+          assert payload['components']
+          PY
       - name: Create path with literal shell metacharacters
         run: |
           mkdir -p 'test-fixtures/$(touch injected-by-action)'
@@ -108,6 +133,7 @@ jobs:
           path: 'test-fixtures/$(touch injected-by-action)'
           output: 'test-fixtures/$(touch injected-by-action)/cbom.json'
           artifact-name: cbom-injection-test
+          dashboard-output: 'test-fixtures/$(touch injected-by-action)/report.html'
       - name: Assert untrusted inputs were not executed
         run: |
           test ! -e injected-by-action
@@ -115,9 +141,24 @@ jobs:
           import json
           from pathlib import Path
           source = Path('test-fixtures/$(touch injected-by-action)/cbom.json')
+          dashboard = Path('test-fixtures/$(touch injected-by-action)/report.html')
           assert json.loads(source.read_text())['components']
+          assert dashboard.is_file()
+          assert 'CryptoScan PQC — CBOM Intelligence' in dashboard.read_text()
           PY
-      - name: Confirm all three artifacts exist in this workflow run
+      - name: Verify users can disable dashboard generation
+        uses: ./
+        with:
+          path: sample_vulnerable_app/auth.py
+          output: no-dashboard-cbom.json
+          artifact-name: cbom-no-dashboard
+          dashboard: "false"
+          dashboard-output: disabled-dashboard.html
+      - name: Confirm disabled dashboard wasn't generated
+        run: |
+          test -f no-dashboard-cbom.json
+          test ! -e disabled-dashboard.html
+      - name: Confirm CBOM and dashboard artifacts (including gated failure and opt-out)
         env:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
@@ -127,9 +168,14 @@ jobs:
           for attempt in 1 2 3 4 5 6 7 8 9 10; do
             names="$(gh api "repos/$REPO/actions/runs/$RUN_ID/artifacts" --jq '.artifacts[].name' || true)"
             if grep -qx 'cbom-success' <<< "$names" &&
+               grep -qx 'cbom-success-dashboard' <<< "$names" &&
                grep -qx 'cbom-failure' <<< "$names" &&
-               grep -qx 'cbom-injection-test' <<< "$names"; then
-              echo "All CBOM artifacts uploaded successfully."
+               grep -qx 'cbom-failure-dashboard' <<< "$names" &&
+               grep -qx 'cbom-injection-test' <<< "$names" &&
+               grep -qx 'cbom-injection-test-dashboard' <<< "$names" &&
+               grep -qx 'cbom-no-dashboard' <<< "$names" &&
+               ! grep -qx 'cbom-no-dashboard-dashboard' <<< "$names"; then
+              echo "All CBOM/dashboard artifacts uploaded, and disabled dashboard omitted."
               exit 0
             fi
             sleep 2

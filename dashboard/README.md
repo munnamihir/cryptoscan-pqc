@@ -34,7 +34,7 @@ When you run this repository's **Scan public GitHub repository** workflow after 
 
 The repository's **PQC demo** workflow also uploads a self-contained dashboard.
 
-The existing Marketplace Action `@v1.1.0` **does not yet auto-generate dashboards** for third-party repositories. It still uploads the JSON CBOM; users can open that JSON with this viewer or build the self-contained HTML themselves. Extending the Marketplace Action would require a future tested release.
+The published Marketplace Action `@v1.1.0` **does not yet auto-generate dashboards** for third-party repositories. This repository's Action source has an opt-out dashboard step prepared for **`v1.2.0`** (release pending). When published, consumers will receive `<artifact-name>` for JSON and `<artifact-name>-dashboard` for HTML by default. Use `dashboard: "false"` to disable or `dashboard-output: "custom-name.html"` to customize the output path. Don't use `@v1.2.0` until the versioned release exists.
 
 ## Privacy
 

@@ -2,14 +2,13 @@
 
 Use the checked-in deliberately vulnerable code, not a real production secret, to see how cryptographic findings are reported.
 
-## 1. Run it on GitHub without installing anything
+## 1. View the public demo, or run it in a repository you control
 
-1. Open [Actions → PQC demo](../.github/workflows/demo.yml).
-2. Click **Run workflow** and select `main` after this demo PR is merged.
-3. Open the finished run's **Summary**. The job writes a Markdown inventory there.
-4. Download the `demo-cbom` artifact from the same run to inspect the CycloneDX 1.6 JSON.
+- **Anyone:** [View a successful demo run](https://github.com/munnamihir/cryptoscan-pqc/actions/runs/45247523530) and the [sample findings below](#3-example-findings-from-sample_vulnerable_app).
+- **Repository maintainers:** Open [Actions → PQC demo](../.github/workflows/demo.yml), select **Run workflow**, and view the Markdown report in the workflow Summary. This workflow is manual-only.
+- **Other developers:** Copy [the example workflow](../examples/pqc-scan.yml) to `.github/workflows/pqc-scan.yml` in your own repository, where you have write access. It starts on push and pull requests without installing local Python.
 
-This workflow is **manual only**, uploads a CBOM (not the checked-out source), and uses the pinned `@v1.1.0` release.
+GitHub requires write access to manually trigger a workflow in a repository. The demo runs with the pinned `@v1.1.0` Action and uploads a CBOM artifact. The scanner reports references, not confirmed vulnerabilities.
 
 ## 2. Run it locally
 

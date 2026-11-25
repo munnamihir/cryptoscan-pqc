@@ -51,6 +51,12 @@ pqscan scan sample_vulnerable_app -o cbom.json
 
 The bundled sample intentionally contains insecure and post-quantum cryptography. Try the [interactive GitHub Actions demo](.github/workflows/demo.yml) (Actions → **PQC demo** → Run workflow), read the [annotated findings](docs/DEMO.md), or explore the [copyable integration example](examples/pqc-scan.yml).
 
+## Scan any public GitHub repository — no local setup
+
+Use the [**Scan public GitHub repository**](.github/workflows/scan-repository.yml) workflow under **Actions → Run workflow**. Enter `owner/repo` or a `https://github.com/owner/repo` URL to scan the default branch and download a CycloneDX CBOM. Results appear in the workflow Summary, and no local Python installation is needed.
+
+[Step-by-step guide and limitations](docs/SCAN_GITHUB_REPOSITORIES.md). This on-demand workflow scans public repositories only; for private repositories, install the Action in a workflow you control.
+
 ## Use it in GitHub Actions
 
 ```yaml

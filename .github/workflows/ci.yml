@@ -27,6 +27,40 @@ jobs:
       - name: Self-scan (smoke test)
         run: python -m cryptoscan scan sample_vulnerable_app --no-color
 
+  remote-repository-integration:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify remote repository identifier
+        id: target
+        env:
+          INPUT_REPOSITORY: https://github.com/munnamihir/cryptoscan-pqc
+        run: python3 scripts/validate_repo_target.py "$INPUT_REPOSITORY" >> "$GITHUB_OUTPUT"
+      - name: Check out public GitHub repository read-only
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ steps.target.outputs.repository }}
+          path: remote-target
+          persist-credentials: false
+          fetch-depth: 1
+      - name: Scan the remote checked-out sample
+        uses: munnamihir/cryptoscan-pqc@v1.1.0
+        with:
+          path: remote-target/sample_vulnerable_app
+          output: remote-integration-cbom.json
+          artifact-name: remote-integration-cbom
+          fail-on-vulnerable: "false"
+      - name: Verify remote repository CBOM
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          bom = json.loads(Path("remote-integration-cbom.json").read_text())
+          assert bom["bomFormat"] == "CycloneDX"
+          assert bom["specVersion"] == "1.6"
+          assert any(comp["name"] == "RSA" for comp in bom["components"])
+          PY
+
   action-integration:
     runs-on: ubuntu-24.04
     steps:

@@ -12,6 +12,18 @@ You cannot migrate cryptography you cannot see. The [June 22, 2026 U.S. Executiv
 
 `cryptoscan-pqc` is a small, fast first step: point it at a repository and it produces (1) a prioritized, human-readable inventory and (2) a machine-readable CycloneDX 1.6 CBOM, with every asset classified by its resistance to a cryptographically relevant quantum computer and mapped to its NIST PQC replacement.
 
+## Explore the CBOM in an interactive dashboard
+
+**Don't stop at a JSON download.** The [CBOM Intelligence Dashboard](dashboard/README.md) turns the generated CycloneDX 1.6 file into a visual review queue with quantum-risk groupings, file-context triage, evidence locations, migration recommendations and CSV export.
+
+**[Open the offline dashboard viewer](dashboard/index.html)** (download/open HTML, then import your CBOM). Or run:
+
+```bash
+python3 dashboard/build_dashboard.py cbom.json -o cryptoscan-dashboard.html
+```
+
+Open the resulting HTML in a browser: it contains the selected CBOM and needs **no server**. The **Scan public GitHub repository** and **PQC demo** workflows in this repository generate an additional downloadable dashboard HTML artifact. The published Marketplace Action `@v1.1.0` still generates CBOM JSON only; dashboard automation for third-party users would require a new release.
+
 ## Scan your GitHub repository — no local installation
 
 **What cryptography is referenced in your code?** Add [this ready-made workflow](examples/pqc-scan.yml) to your own repository at `.github/workflows/pqc-scan.yml`. On the next push, GitHub Actions will generate a **CycloneDX 1.6 cryptographic bill of materials (CBOM)** as a downloadable artifact.

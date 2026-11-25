@@ -41,3 +41,13 @@ jobs:
           assert report["components"]
           print("CBOM generated; download demo-cbom under this run's artifacts.")
           PY
+
+      - name: Generate offline interactive dashboard
+        run: python3 dashboard/build_dashboard.py demo-cbom.json -o demo-dashboard.html
+
+      - name: Upload interactive CBOM dashboard
+        uses: actions/upload-artifact@v4
+        with:
+          name: demo-dashboard
+          path: demo-dashboard.html
+          if-no-files-found: error

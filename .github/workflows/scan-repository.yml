@@ -88,3 +88,14 @@ jobs:
           assert data["specVersion"] == "1.6"
           print("CBOM verified. Download github-repository-cbom from the run's Artifacts.")
           PY
+
+      - name: Generate offline interactive dashboard
+        shell: bash
+        run: python3 dashboard/build_dashboard.py github-repository-cbom.json -o github-repository-dashboard.html
+
+      - name: Upload interactive CBOM dashboard
+        uses: actions/upload-artifact@v4
+        with:
+          name: github-repository-dashboard
+          path: github-repository-dashboard.html
+          if-no-files-found: error

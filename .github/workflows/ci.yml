@@ -60,6 +60,16 @@ jobs:
           assert bom["specVersion"] == "1.6"
           assert any(comp["name"] == "RSA" for comp in bom["components"])
           PY
+      - name: Generate and validate HTML dashboard from remote scan
+        run: |
+          python3 dashboard/build_dashboard.py remote-integration-cbom.json -o remote-integration-dashboard.html
+          python3 - <<'PY'
+          from pathlib import Path
+          html = Path('remote-integration-dashboard.html').read_text()
+          assert '<script id="bootstrap-data" type="application/json">' in html
+          assert '"name":"RSA"' in html
+          assert 'CryptoScan PQC — CBOM Intelligence' in html
+          PY
 
   action-integration:
     runs-on: ubuntu-24.04

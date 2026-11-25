@@ -1,0 +1,90 @@
+# On-demand, read-only scanning of one public GitHub repository.
+# Input is validated and public visibility is checked before checkout.
+# This workflow never executes source code from the selected repository.
+name: Scan public GitHub repository
+
+on:
+  workflow_dispatch:
+    inputs:
+      repository:
+        description: "Public GitHub repository: owner/repo or https://github.com/owner/repo"
+        type: string
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  remote-scan:
+    name: Scan selected public repository
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Check out CryptoScan workflow utilities
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Validate GitHub repository input
+        id: target
+        shell: bash
+        env:
+          USER_REPOSITORY: ${{ inputs.repository }}
+        run: |
+          set -euo pipefail
+          python3 scripts/validate_repo_target.py "$USER_REPOSITORY" >> "$GITHUB_OUTPUT"
+
+      - name: Confirm repository is publicly accessible
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ steps.target.outputs.repository }}
+        run: |
+          set -euo pipefail
+          visibility="$(gh api "repos/$REPOSITORY" --jq '.visibility')"
+          if [[ "$visibility" != "public" ]]; then
+            echo "::error::Only publicly accessible repositories are supported."
+            exit 1
+          fi
+
+      - name: Check out selected repository (default branch only)
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ steps.target.outputs.repository }}
+          path: scan-target
+          fetch-depth: 1
+          persist-credentials: false
+          submodules: false
+          lfs: false
+
+      - name: Run released CryptoScan PQC Action
+        uses: munnamihir/cryptoscan-pqc@v1.1.0
+        with:
+          path: scan-target
+          output: github-repository-cbom.json
+          artifact-name: github-repository-cbom
+          fail-on-vulnerable: "false"
+
+      - name: Add readable report to workflow summary
+        shell: bash
+        env:
+          REPOSITORY: ${{ steps.target.outputs.repository }}
+        run: |
+          set -euo pipefail
+          {
+            echo "## CryptoScan PQC — public GitHub repository"
+            echo ""
+            echo "Scanned repository: \`$REPOSITORY\` (default branch)"
+            echo ""
+            echo "This report identifies algorithm references; findings require human validation."
+            echo ""
+          } >> "$GITHUB_STEP_SUMMARY"
+          python -m cryptoscan scan scan-target -f md >> "$GITHUB_STEP_SUMMARY"
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          data = json.loads(Path("github-repository-cbom.json").read_text())
+          assert data["bomFormat"] == "CycloneDX"
+          assert data["specVersion"] == "1.6"
+          print("CBOM verified. Download github-repository-cbom from the run's Artifacts.")
+          PY

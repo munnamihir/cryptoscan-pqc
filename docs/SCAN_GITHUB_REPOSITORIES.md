@@ -1,8 +1,10 @@
 # Scan a public GitHub repository without installing Python
 
-Run CryptoScan PQC directly in GitHub Actions using [Scan public GitHub repository](../.github/workflows/scan-repository.yml).
+Repository maintainers can use [Scan public GitHub repository](../.github/workflows/scan-repository.yml) to scan another public repository. **GitHub requires write access to the CryptoScan repository to start its manual workflow.** If you are an external visitor, use [the copyable Action workflow](../examples/pqc-scan.yml) in a repository you own; this is the supported no-local-installation path.
 
-## Steps
+[View the completed sample demo](https://github.com/munnamihir/cryptoscan-pqc/actions/runs/45247523530).
+
+## Steps for CryptoScan maintainers
 
 1. Open **Actions** in the CryptoScan PQC repository.
 2. Select **Scan public GitHub repository** in the left workflow list.
@@ -30,6 +32,6 @@ No local Python installation is needed. The workflow uses CryptoScan PQC `v1.1.0
 - **Accuracy:** regex detections can identify references in comments and documentation or miss cryptography used indirectly. Review results before treating them as vulnerabilities or compliance findings.
 - **Privacy:** the resulting CBOM includes algorithm names and source file/line paths. Do not scan private or sensitive repositories with a publicly visible workflow report.
 
-## Continuous scanning in your own repository
+## Continuous scanning in your own repository (recommended for visitors)
 
 Copy [`examples/pqc-scan.yml`](../examples/pqc-scan.yml) into your repository's `.github/workflows/pqc-scan.yml` to run the Action on every push and pull request. This does not require the manual on-demand workflow.

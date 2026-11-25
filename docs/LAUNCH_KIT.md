@@ -12,7 +12,8 @@
 
 - Repository: https://github.com/munnamihir/cryptoscan-pqc
 - Tested release: https://github.com/munnamihir/cryptoscan-pqc/releases/tag/v1.1.0
-- Demo workflow: https://github.com/munnamihir/cryptoscan-pqc/actions/workflows/demo.yml
+- Demo run (read-only to visitors): https://github.com/munnamihir/cryptoscan-pqc/actions/runs/45247523530
+- Copyable workflow (best first step for visitors): https://github.com/munnamihir/cryptoscan-pqc/blob/main/examples/pqc-scan.yml
 - Integration example: https://github.com/munnamihir/cryptoscan-pqc/blob/main/examples/pqc-scan.yml
 - Sample findings: https://github.com/munnamihir/cryptoscan-pqc/blob/main/docs/DEMO.md
 
@@ -35,7 +36,7 @@ Only post where community rules permit self-promotion. Share the source, limitat
 ## Adoption experiment
 
 1. Ask 10 relevant **opt-in** engineers to try the example workflow (avoid mass DMs).
-2. Give them a one-command local demo and a manual-only Action demo.
+2. Give them the copyable GitHub Actions workflow and a completed demo run (visitors cannot manually dispatch a workflow in a repository where they lack write access).
 3. Request one concrete item per tester: false positive, missed algorithm, output-format issue, or feature request.
 4. Log genuine outside-repo adoption separately from stars, forks, and page views.
 5. Improve the top 1–2 user-blocking issues in a patch release and report what changed.
@@ -51,3 +52,11 @@ Only post where community rules permit self-promotion. Share the source, limitat
 | Open-source interest | Non-author PRs, forks or stars (signals, not proof of usage) |
 
 No traction figures are claimed until observed.
+
+## Launch messaging priorities
+
+- Lead with **copy one GitHub Actions workflow; get a CBOM artifact**. Avoid positioning this as a general-purpose scanner or an audit certification.
+- Share one concrete, non-sensitive example from the checked-in sample, and invite feedback on false positives.
+- GitHub `workflow_dispatch` is available only to users with repository write permission. Do **not** tell external visitors they can click the project's manual Run button.
+- This repo currently lacks third-party usage evidence; request reproducible feedback and permission to quote any testimonials.
+- If using Hacker News Show HN, [read their rules](https://news.ycombinator.com/showhn.html) and write the submission yourself in your own words. Do not ask for coordinated upvotes.

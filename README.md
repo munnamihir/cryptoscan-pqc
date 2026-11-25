@@ -12,6 +12,18 @@ You cannot migrate cryptography you cannot see. The [June 22, 2026 U.S. Executiv
 
 `cryptoscan-pqc` is a small, fast first step: point it at a repository and it produces (1) a prioritized, human-readable inventory and (2) a machine-readable CycloneDX 1.6 CBOM, with every asset classified by its resistance to a cryptographically relevant quantum computer and mapped to its NIST PQC replacement.
 
+## Scan your GitHub repository — no local installation
+
+**What cryptography is referenced in your code?** Add [this ready-made workflow](examples/pqc-scan.yml) to your own repository at `.github/workflows/pqc-scan.yml`. On the next push, GitHub Actions will generate a **CycloneDX 1.6 cryptographic bill of materials (CBOM)** as a downloadable artifact.
+
+- **Input:** your repository's source files
+- **Output:** recognized cryptographic algorithms, locations, and potential post-quantum migration signals
+- **Setup:** one workflow file; Python runs in GitHub Actions, not on your laptop
+
+The first scan is inventory-only and **does not block CI**. Detected algorithm names are not confirmed vulnerabilities. Review the findings before enabling enforcement.
+
+**[Copy the workflow](examples/pqc-scan.yml)** · **[See sample findings](docs/DEMO.md)** · **[View a successful demo run](https://github.com/munnamihir/cryptoscan-pqc/actions/runs/45247523530)**
+
 ## Install
 
 ```bash
@@ -49,11 +61,11 @@ pqscan scan sample_vulnerable_app -f md
 pqscan scan sample_vulnerable_app -o cbom.json
 ```
 
-The bundled sample intentionally contains insecure and post-quantum cryptography. Try the [interactive GitHub Actions demo](.github/workflows/demo.yml) (Actions → **PQC demo** → Run workflow), read the [annotated findings](docs/DEMO.md), or explore the [copyable integration example](examples/pqc-scan.yml).
+The bundled sample intentionally contains insecure and post-quantum cryptography. You can [view a completed demo run](https://github.com/munnamihir/cryptoscan-pqc/actions/runs/45247523530) and read the [annotated findings](docs/DEMO.md). Repository maintainers can run the [manual PQC demo workflow](.github/workflows/demo.yml); other developers should use the [copyable integration example](examples/pqc-scan.yml) in a repository they control.
 
 ## Scan any public GitHub repository — no local setup
 
-Use the [**Scan public GitHub repository**](.github/workflows/scan-repository.yml) workflow under **Actions → Run workflow**. Enter `owner/repo` or a `https://github.com/owner/repo` URL to scan the default branch and download a CycloneDX CBOM. Results appear in the workflow Summary, and no local Python installation is needed.
+Repository maintainers can use [**Scan public GitHub repository**](.github/workflows/scan-repository.yml) under **Actions → Run workflow**. Enter `owner/repo` or a `https://github.com/owner/repo` URL to scan the default branch and download a CycloneDX CBOM. **GitHub requires write access to trigger someone else's manual workflow**. To scan your own project without local Python, add [this workflow](examples/pqc-scan.yml) in your own repository instead.
 
 [Step-by-step guide and limitations](docs/SCAN_GITHUB_REPOSITORIES.md). This on-demand workflow scans public repositories only; for private repositories, install the Action in a workflow you control.
 

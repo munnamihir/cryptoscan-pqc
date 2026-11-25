@@ -26,6 +26,14 @@ inputs:
     description: "Optional exact PyPI package version; when empty, install scanner bundled with this Action"
     required: false
     default: ""
+  dashboard:
+    description: "Generate and upload a self-contained interactive HTML report alongside the CBOM"
+    required: false
+    default: "true"
+  dashboard-output:
+    description: "Path to write the optional offline HTML dashboard"
+    required: false
+    default: "cryptoscan-dashboard.html"
 
 runs:
   using: composite
@@ -65,4 +73,26 @@ runs:
       with:
         name: ${{ inputs.artifact-name }}
         path: ${{ inputs.output }}
+        if-no-files-found: error
+    - name: Generate offline dashboard even if vulnerable cryptography was found
+      id: dashboard
+      if: ${{ always() && inputs.dashboard == 'true' && steps.scan.outcome != 'skipped' }}
+      shell: bash
+      env:
+        ACTION_SOURCE: ${{ github.action_path }}
+        INPUT_CBOM: ${{ inputs.output }}
+        INPUT_DASHBOARD_OUTPUT: ${{ inputs.dashboard-output }}
+      run: |
+        set -euo pipefail
+        if [[ ! -f "$INPUT_CBOM" ]]; then
+          echo "::warning::No CBOM JSON was produced; skipping the dashboard."
+          exit 1
+        fi
+        python "$ACTION_SOURCE/dashboard/build_dashboard.py" "$INPUT_CBOM" -o "$INPUT_DASHBOARD_OUTPUT"
+    - name: Upload interactive HTML dashboard
+      if: ${{ always() && steps.dashboard.outcome == 'success' }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ inputs.artifact-name }}-dashboard
+        path: ${{ inputs.dashboard-output }}
         if-no-files-found: error

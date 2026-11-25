@@ -22,7 +22,7 @@ You cannot migrate cryptography you cannot see. The [June 22, 2026 U.S. Executiv
 python3 dashboard/build_dashboard.py cbom.json -o cryptoscan-dashboard.html
 ```
 
-Open the resulting HTML in a browser: it contains the selected CBOM and needs **no server**. The **Scan public GitHub repository** and **PQC demo** workflows in this repository generate an additional downloadable dashboard HTML artifact. The published Marketplace Action `@v1.1.0` still generates CBOM JSON only; dashboard automation for third-party users would require a new release.
+Open the resulting HTML in a browser: it contains the selected CBOM and needs **no server**. The **Scan public GitHub repository** and **PQC demo** workflows in this repository generate an additional downloadable dashboard HTML artifact. The published Marketplace Action `@v1.1.0` still generates CBOM JSON only. **Automatic dashboard uploads for consumers are being prepared for Action `v1.2.0`**; do not use that tag until the release is published. The new Action code on `main` supports `dashboard: "true"` (default), `dashboard: "false"` to opt out, and `dashboard-output` to customize the HTML path. The report artifact name is derived from the CBOM artifact name with a `-dashboard` suffix. See the [v1.2.0 release checklist](docs/RELEASE_v1.2.0.md).
 
 ## Scan your GitHub repository — no local installation
 
